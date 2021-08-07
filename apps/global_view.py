@@ -3,7 +3,7 @@ import dash_html_components as html
 from dash.dependencies import Output, Input
 import pathlib
 import pandas as pd
-# from app import app   # funktioniert nicht, warum?
+from app import app  # funktioniert nicht, warum?
 
 ### OLD ###
 ## read data from file
@@ -13,7 +13,7 @@ import pandas as pd
 # read data from relative path
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("../data").resolve()
-data = pd.read_excel(DATA_PATH.joinpath("data.xlsx"))
+data = pd.read_csv(DATA_PATH.joinpath("data_01.csv"))
 print(data)
 
 # # manipulate data for better insight & usability
@@ -52,7 +52,7 @@ print(data)
 # #dataPie = dataPie.groupby("Filiale")[["Gesamtumsatz", "Verkaufte Menge"]].sum().reset_index()
 # dataPie = data[["Filiale", "Verkaufsdatum", "Verkaufte Menge", "Gesamtumsatz"]]
 # dataPie = dataPie.groupby(["Filiale", "Verkaufsdatum"])[["Gesamtumsatz", "Verkaufte Menge"]].sum().reset_index()
-    
+
 # # create dataset for bar chart
 # #dataBar = data[["Produktkategorie", "Verkaufte Menge", "Gesamtumsatz"]]
 # #dataBar = dataBar.groupby("Produktkategorie")[["Gesamtumsatz", "Verkaufte Menge"]].sum().reset_index()
@@ -65,7 +65,6 @@ print(data)
 
 # # create filter element for key figure switch
 # chart_measure = pd.DataFrame({"Filter":["Total Revenue", "Total Volume"]})
-
 
 # ##app = dash.Dash(__name__)
 
@@ -140,8 +139,8 @@ print(data)
 
 # @app.callback(
 #     [
-#         Output("pie-chart", "figure"), 
-#         Output("bar-chart", "figure"), 
+#         Output("pie-chart", "figure"),
+#         Output("bar-chart", "figure"),
 #         Output("line-chart", "figure")
 #     ],
 #     [
@@ -153,7 +152,7 @@ print(data)
 # )
 
 # def update_charts(selected_measure, start_date, end_date):
-    
+
 #     maskPie = (
 #         (dataPie.Verkaufsdatum >= start_date)
 #         & (dataPie.Verkaufsdatum <= end_date)
@@ -166,7 +165,7 @@ print(data)
 #         (dataLine.Verkaufsdatum >= start_date)
 #         & (dataLine.Verkaufsdatum <= end_date)
 #     )
-    
+
 #     filtered_dataPie = dataPie.loc[maskPie, :]
 #     filtered_dataBar = dataBar.loc[maskBar, :]
 #     filtered_dataLine = dataLine.loc[maskLine, :]
@@ -272,8 +271,6 @@ print(data)
 #     }
 
 #     return pie_chart_figure, bar_chart_figure, line_chart_figure
-
-
 
 # # if __name__ == "__main__":
 # #     app.run_server(debug=True)
