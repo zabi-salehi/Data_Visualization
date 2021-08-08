@@ -7,45 +7,29 @@ from app import app  # funktioniert nicht, warum?
 
 ### OLD ###
 ## read data from file
-#data = pd.read_csv(r"D:/Work/Repository/Visual Studio Code/Python/DHBW/Data Visualization/Exercises/ee_showcase_multipage/data/sales_ernesto_co_03.csv", sep=";")
-###########
+# read data from file
+data = pd.read_excel("C://Users//I539001//Desktop//DHBW//2. Semester//Data Visualization//Portfolioprüfung//source_code//data//data.xlsx")
 
-# read data from relative path
-PATH = pathlib.Path(__file__).parent
-DATA_PATH = PATH.joinpath("../data").resolve()
-data = pd.read_csv(DATA_PATH.joinpath("data_01.csv"))
-print(data)
+#dropping some columns since unnecessaary 
+data.drop("Unnamed: 34", inplace=True, axis = 1) 
+data.drop("Unnamed: 35", inplace=True, axis = 1) 
+data.drop("Delivery deviation  in days", inplace=True, axis = 1)
 
-# # manipulate data for better insight & usability
-# data["Verkaufsdatum"] = pd.to_datetime(data["Verkaufsdatum"], format="%Y%m%d")
-# data["Gesamtumsatz"] = data["Verkaufspreis"] * data["Verkaufte Menge"]
-# data["Planumsatz"] = data["Empfohlener Verkaufspreis"] * data["Verkaufte Menge (PLAN)"]
-# data = data.replace({"Filiale" :   {100001 : "Ernesto & Friends",
-#                                         100002 : "Kaffee2Go",
-#                                         100010 : "GourmetCoffee",
-#                                         100145 : "Coffee, Coffee, Coffee",
-#                                         100146 : "Ernesto's Espresso"},
-#                         "Produkt" : {1 : "Espresso",
-#                                      2 : "Espresso extra forte",
-#                                      3 : "Cappuccino",
-#                                      5 : "Cappuccino forte",
-#                                      8 : "Latte Macchiato",
-#                                      10 : "Latte Macchiato forte",
-#                                      15 : "Wasser",
-#                                      20 : "Orangensaft",
-#                                      21 : "Ananassaft",
-#                                      50 : "Fitness Bagel",
-#                                      51 : "Frühstücks Bagel",
-#                                      52 : "Frischkäse Bagel",
-#                                      60 : "Cookie",
-#                                      64 : "Muffin Himbeere",
-#                                      65 : "Muffin Jogurt"},
-#                         "Lieferant" :   {5000000001 : "Gourmet Kaffee-Lieferant UNO",
-#                                          5000000002 : "Kaffeespezialist No. 1",
-#                                          5000000004 : "Arabica Express",
-#                                          5000000005 : "Kaffeelieferant Heidelberg",
-#                                          5000000006 : "Bohnenbringer GmbH",
-#                                          5000000009 : "Black Gold Logistics"}})
+data["Delivery deviation in days"] = data["delivery date"] - data["supplier delivery date"]
+data["Delivery deviation in days"] = data["Delivery deviation in days"].apply(lambda x: float(x.days))
+
+conditions = [(data['Delivery deviation in days'] <= 0),
+              (data['Delivery deviation in days'] >= 1) & (data['Delivery deviation in days'] <= 4),
+              (data['Delivery deviation in days'] >= 5) & (data['Delivery deviation in days'] <= 10),
+              (data['Delivery deviation in days'] > 10)]
+
+
+values = ['in time', 'late: < 5 days', 'late: 5 to 10 days', 'late: > 10 days']
+data['deviation indicator'] = np.select(conditions, values)
+
+data['Year'] = data['Document Date'].dt.year
+data['Month'] = data['Document Date'].dt.month
+                  
 
 # # create dataset for pie chart
 # #dataPie = data[["Filiale", "Verkaufte Menge", "Gesamtumsatz"]]
