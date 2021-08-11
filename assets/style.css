@@ -4,8 +4,6 @@ body {
     background-color: #6c7744;
 }
 
-/* Header definitions
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
 .logo {
     height: 50px;
     width: 50px;
@@ -14,6 +12,7 @@ body {
     padding-top: 2px;
     display: inline-block;
 }
+
 
 .header {
     background-color: #2d170a;
@@ -38,14 +37,7 @@ body {
     text-align: left;
     padding-left: 18px;
 }
-.header-links {
-    display: inline-block;
-    justify-content: right;
-    padding-left: 192px;
-}
 
-/* Content definitions
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
 .content {
     margin-right: auto;
     margin-left: auto;
@@ -81,8 +73,6 @@ body {
     border-radius: 20px;
 }
 
-/* Navigation definitions
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
 .menu {
     height: 112px;
     width: 912px;
@@ -94,33 +84,6 @@ body {
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.28);
     border-radius: 20px;
 }
-
-.button {
-    text-decoration: none;
-    color: #ffffff;
-    padding: 6px 6px 6px 6px;
-    /*border-top: 1px solid #CCCCCC;
-    border-right: 1px solid #333333;
-    border-bottom: 1px solid #333333;
-    border-left: 1px solid #CCCCCC;*/
-    border-radius: 5px;
-}
-.button:link {
-    color: #ffffff;
-}
-.button:visited {
-    color: #ffffff;
-}
-.active, .button:hover {
-    text-decoration: none;
-    color: #6c7744;
-    padding: 6px 6px 6px 6px;
-    border-radius: 5px;
-}
-.button:active {
-    color: #6c7744;
-}
-
 
 .Select-control {
     width: 256px;
@@ -139,15 +102,4 @@ body {
     margin-bottom: 6px;
     font-weight: bold;
     color: #512f15;
-}
-
-/* Clearing
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-/* Self Clearing Goodness */
-.container:after,
-.row:after,
-.u-cf {
-    content: "";
-    display: table;
-    clear: both; 
 }
