@@ -31,27 +31,52 @@ data['deviation indicator'] = np.select(conditions, values)
 
 data['Year'] = data['Document Date'].dt.year
 data['Month'] = data['Document Date'].dt.month
+data['Year/Month'] = data['Document Date'].dt.year.astype(str) + '/' + data['Document Date'].dt.month.astype(str)
 
-# orderedSpend_numbOrders_year = data.groupby(["Year"])[["Net Value", "ORDERED Quantity"]].sum().reset_index()
-orderedSpend_numbOrders_year = data.groupby(["Year", "Purchasing Org.", "Company Code", "Plant",
-                                             "Material Group"])[["Net Value", "ORDERED Quantity"]].sum().reset_index()
+orderedSpend_year = data.groupby(["Year"])[["Net Value"]].sum().reset_index()
 
-Netvalue = [orderedSpend_numbOrders_year["Net Value"].iloc[0], orderedSpend_numbOrders_year["Net Value"].iloc[1]]
-orderd_quantity = [
-    orderedSpend_numbOrders_year["ORDERED Quantity"].iloc[0], orderedSpend_numbOrders_year["ORDERED Quantity"].iloc[1]
-]
+data_2019 = data[data["Year"] == 2019]
+data_2020 = data[data["Year"] == 2020]
 
-orderedSpend_numbOrders_year_month = data.groupby(["Month"])[["Net Value", "ORDERED Quantity"]].sum().reset_index()
+numbOrders_2019 = len(pd.unique(data_2019["Purchasing Doc."]))
 
-orderedSpend_numbOrders_year_PurchOrg = data.groupby(["Purchasing Org."])[["Net Value",
-                                                                           "ORDERED Quantity"]].sum().reset_index()
+numbOrders_2020 = len(pd.unique(data_2020["Purchasing Doc."]))
+
+orderdSpend_month_2019 = data_2019.groupby(["Month"])[["Net Value"]].sum().reset_index()
+orderdSpend_month_2020 = data_2020.groupby(["Month"])[["Net Value"]].sum().reset_index()
+
+df2019_without_purchDoc_duplicates = data_2019.drop_duplicates(subset=['Purchasing Doc.'])
+df2020_without_purchDoc_duplicates = data_2020.drop_duplicates(subset=['Purchasing Doc.'])
+
+numbOrders_month_2019 = df2019_without_purchDoc_duplicates.groupby(
+    ["Month"])[["Purchasing Doc."]].count().reset_index().rename(columns={"Purchasing Doc.": "numbOrders"})
+numbOrders_month_2020 = df2020_without_purchDoc_duplicates.groupby(
+    ["Month"])[["Purchasing Doc."]].count().reset_index().rename(columns={"Purchasing Doc.": "numbOrders"})
+
+orderdSpend_purchOrg_2019 = data_2019.groupby(["Purchasing Org."])[["Net Value"]].sum().reset_index()
+orderdSpend_purchOrg_2020 = data_2020.groupby(["Purchasing Org."])[["Net Value"]].sum().reset_index()
+df2019_without_purchDoc_duplicates = data_2019.drop_duplicates(subset=['Purchasing Doc.'])
+df2020_without_purchDoc_duplicates = data_2020.drop_duplicates(subset=['Purchasing Doc.'])
+
+numbOrders_purchOrg_2019 = df2019_without_purchDoc_duplicates.groupby(
+    ["Purchasing Org."])[["Purchasing Doc."]].count().reset_index().rename(columns={"Purchasing Doc.": "numbOrders"})
+numbOrders_purchOrg_2020 = df2020_without_purchDoc_duplicates.groupby(
+    ["Purchasing Org."])[["Purchasing Doc."]].count().reset_index().rename(columns={"Purchasing Doc.": "numbOrders"})
+# zum string umwandeln damit plotly die zahlen nicht als zahl sondern als eine Bezeichnung für Organistan erkennt
+orderdSpend_purchOrg_2019["Purchasing Org."] = orderdSpend_purchOrg_2019["Purchasing Org."].apply(lambda x: str(x))
+orderdSpend_purchOrg_2020["Purchasing Org."] = orderdSpend_purchOrg_2020["Purchasing Org."].apply(lambda x: str(x))
+numbOrders_purchOrg_2019["Purchasing Org."] = numbOrders_purchOrg_2019["Purchasing Org."].apply(lambda x: str(x))
+numbOrders_purchOrg_2020["Purchasing Org."] = numbOrders_purchOrg_2020["Purchasing Org."].apply(lambda x: str(x))
 
 supplier_netValue = data.groupby(["Year",
                                   "Supplier name"])[["Net Value"]].sum().reset_index().sort_values(by="Net Value",
                                                                                                    ascending=False)
-top_10_2019 = supplier_netValue[supplier_netValue["Year"] == 2019].head(10)
-top_10_2020 = supplier_netValue[supplier_netValue["Year"] == 2020].head(10)
-
+top10_2019 = data_2019.groupby(["Supplier name"])[["Net Value"
+                                                   ]].sum().reset_index().sort_values(by="Net Value",
+                                                                                      ascending=False).head(10)
+top10_2020 = data_2020.groupby(["Supplier name"])[["Net Value"
+                                                   ]].sum().reset_index().sort_values(by="Net Value",
+                                                                                      ascending=False).head(10)
 # create filter element for key figure switch
 # chart_measure = pd.DataFrame({"Filter": ["Total Revenue", "Total Volume"]})  # was genau macht das?
 
@@ -102,6 +127,21 @@ app.layout = html.Div(children=[
                          clearable=False,
                          className="dropdown")
         ]),
+        html.Div(children=[
+            html.Div(children="Date", className="menu-title"),
+            dcc.Dropdown(id="date",
+                         options=[{
+                             "label": "2020",
+                             "value": "2020"
+                         }, {
+                             "label": "2019",
+                             "value": "2019"
+                         }],
+                         value="Year",
+                         searchable=False,
+                         clearable=False,
+                         className="dropdown"),
+        ])
     ],
              className="menu"),
     # chart definition
@@ -126,51 +166,21 @@ app.layout = html.Div(children=[
 )
 def update_charts(selected_measure):
 
-    # print(maskPie)
-
-    filtered_dataPie = dataPie.loc[maskPie, :]
-    filtered_dataBar = dataBar.loc[maskBar, :]
-    filtered_dataLine = dataLine.loc[maskLine, :]
-    filtered_dataPie = filtered_dataPie.groupby("Filiale")[["Gesamtumsatz", "Verkaufte Menge",
-                                                            "Verkaufsdatum"]].sum().reset_index()
-    filtered_dataPie = filtered_dataPie.sort_values(by=["Gesamtumsatz"])
-    filtered_dataBar = filtered_dataBar.groupby("Produktkategorie")[[
-        "Gesamtumsatz", "Verkaufte Menge", "Verkaufsdatum"
-    ]].sum().reset_index()
-
-    format_mapping = {'Gesamtumsatz': '{:,.2f}', 'Verkaufte Menge': '{:,.0f}'}
-    for key, value in format_mapping.items():
-        filtered_dataBar[key] = filtered_dataBar[key].map(value.format)
-
-    format_mapping = {
-        'Gesamtumsatz': '{:,.2f}',
-        'Planumsatz': '{:,.2f}',
-        'Verkaufte Menge': '{:,.0f}',
-        'Verkaufte Menge (PLAN)': '{:,.0f}'
-    }
-    for key, value in format_mapping.items():
-        filtered_dataLine[key] = filtered_dataLine[key].map(value.format)
-
-    if selected_measure == "Gesamtumsatz":
-        selected_measure_plan = "Planumsatz"
-        name_line = "Revenue"
-        name_line_plan = "Planned Revenue"
-    else:
-        selected_measure_plan = "Verkaufte Menge (PLAN)"
-        name_line = "Volume"
-        name_line_plan = "Planned Volume"
-
-    pie_chart_figure = {
-        "data": [{
-            "labels": filtered_dataPie["Filiale"],
-            "values": filtered_dataPie[selected_measure],
-            "type": "pie",
-            "sort": True,
-            "direction": "clockwise",
-            "marker": {
-                "colors": ["#512f1533", "#512f1566", "#512f1599", "#512f15cc", "#512f15ff"]
-            }
-        }],
+    bar_chart_figure1 = {
+        'data': [
+            {
+                'x': orderdSpend_purchOrg_2020["Purchasing Org."],
+                'y': orderdSpend_purchOrg_2020["Net Value"],
+                'type': 'bar',
+                'name': 'SF'
+            },
+            {
+                'x': orderdSpend_purchOrg_2019["Purchasing Org."],
+                'y': orderdSpend_purchOrg_2019["Net Value"],
+                'type': 'bar',
+                'name': u'Montréal'
+            },
+        ],
         "layout": {
             "title": "Sales by Store",
             "showlegend": False,
@@ -179,16 +189,16 @@ def update_charts(selected_measure):
         }
     }
 
-    bar_chart_figure = {
+    bar_chart_figure2 = {
         "data": [{
-            "x": filtered_dataBar["Produktkategorie"],
-            "y": filtered_dataBar[selected_measure],
+            "x": top10_2019["Supplier name"],
+            "y": top10_2019["Net Value"],
             "type": "bar",
             "marker": {
                 "color": "#512f15"
-            },
-            "text": filtered_dataBar[selected_measure],
-            "textposition": "auto"
+            }
+            # "text": filtered_dataBar[selected_measure],
+            # "textposition": "auto"
         }],
         "layout": {
             "title": "Sales by Product Category",
@@ -207,29 +217,32 @@ def update_charts(selected_measure):
     }
 
     line_chart_figure = {
-        "data": [{
-            "x": filtered_dataLine["Verkaufsdatum"],
-            "y": filtered_dataLine[selected_measure],
-            "type": "line",
-            "name": name_line,
-            "line": {
-                "width": 4
+        "data": [
+            {
+                "x": orderdSpend_month_2019["Month"],
+                "y": orderdSpend_month_2019["Net Value"],
+                "type": "line",
+                # "name": name_line,
+                "line": {
+                    "width": 4
+                },
+                "marker": {
+                    "color": "#512f15"
+                },
             },
-            "marker": {
-                "color": "#512f15"
-            },
-        }, {
-            "x": filtered_dataLine["Verkaufsdatum"],
-            "y": filtered_dataLine[selected_measure_plan],
-            "type": "line",
-            "name": name_line_plan,
-            "line": {
-                "width": 4
-            },
-            "marker": {
-                "color": "#6c7744"
-            },
-        }],
+            {
+                "x": orderdSpend_month_2020["Month"],
+                "y": orderdSpend_month_2020["Net Value"],
+                "type": "line",
+                # "name": name_line_plan,
+                "line": {
+                    "width": 4
+                },
+                "marker": {
+                    "color": "#6c7744"
+                },
+            }
+        ],
         "layout": {
             "title": "Sales by Selling Date",
             "showlegend": False,
@@ -238,7 +251,7 @@ def update_charts(selected_measure):
         }
     }
 
-    return pie_chart_figure, bar_chart_figure, line_chart_figure
+    return line_chart_figure
 
 
 if __name__ == "__main__":
