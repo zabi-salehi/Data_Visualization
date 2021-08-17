@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "..\\..\\..\\..\\..\\..\\OneDrive\\Documents\\GitHub\\Data_Visualization"
+		},
+		{
+			"path": "..\\..\\..\\..\\Portfolio"
+		}
+	],
+	"settings": {
+		"terminal.integrated.cwd": "app"
+	}
+}
