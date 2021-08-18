@@ -11,7 +11,7 @@ from dash.dependencies import Input, Output
 from dash_html_components.Datalist import Datalist
 
 # read data from file
-data = pd.read_excel(r"Neuer Ordner\Data_z\Data_Visualization\data\data.xlsx")
+data = pd.read_excel(r"data\data.xlsx")
 
 #dropping some columns since unnecessaary
 data.drop("Unnamed: 34", inplace=True, axis=1)
@@ -68,6 +68,8 @@ orderdSpend_purchOrg_2020["Purchasing Org."] = orderdSpend_purchOrg_2020["Purcha
 numbOrders_purchOrg_2019["Purchasing Org."] = numbOrders_purchOrg_2019["Purchasing Org."].apply(lambda x: 'PO: ' + str(x))
 numbOrders_purchOrg_2020["Purchasing Org."] = numbOrders_purchOrg_2020["Purchasing Org."].apply(lambda x: 'PO: ' + str(x))
 
+string_value ='test'
+
 supplier_netValue = data.groupby(["Year",
                                   "Supplier name"])[["Net Value"]].sum().reset_index().sort_values(by="Net Value",
                                                                                                    ascending=False)
@@ -81,6 +83,28 @@ top10_2020 = data_2020.groupby(["Supplier name"])[["Net Value"
 # chart_measure = pd.DataFrame({"Filter": ["Total Revenue", "Total Volume"]})  # was genau macht das?
 
 app = dash.Dash(__name__)
+
+colors = { # Farben können an den Styleguide angepasst werden und werden für alle Diagramme übernommen
+    'text1' : '#ff0000', # Farbe für normale Schrift
+    'text2' : '#0B610B', # Variation der Schriftfarbe
+    # Farbe für Hintergründe des Plots
+    'plot_bgcolor' : '#e3e4da', # um papercolor herum außerhalb des plots
+    'paper_bgcolor' : '#d3d3d3',# Farbe für Hintergründe des Paperbackground (vor plot background)
+    'color_text_in_plots': '#ffffff' # Farbe für die Texte im Plot
+}
+
+options_einkauforg = [
+    {"label": "54", "value": "54"},
+    {"label": "5200", "value": "5200"},
+    {"label": "5210", "value": "5210"},
+    {"label": "5310", "value": "5310"},
+    {"label": "5320", "value": "5320"},
+    {"label": "5400", "value": "5400"},
+    {"label": "5410", "value": "5410"},
+    {"label": "5420", "value": "5420"},
+]
+
+all_cities = [option["value"] for option in options_einkauforg]
 
 app.title = "Supplier Mangement Dashboard"
 
@@ -127,6 +151,23 @@ app.layout = html.Div(children=[
                          clearable=False,
                          className="dropdown")
         ]),
+        # html.Div(
+        #     [
+        #     dcc.Checklist(
+        #         id="all-checklist",
+        #         options=[{"label": "All", "value": "All"}],
+        #         value=[],
+        #         labelStyle={"display": "inline-block"},
+        #     ),
+        #     dcc.Checklist(
+        #         id="city-checklist",
+        #         options=options_einkauforg,
+        #         value=[],
+        #         labelStyle={"display": "inline-block"},
+        #     ),
+        #     ]
+        # ),
+
         html.Div(children = [
             html.Div(children = 'Net Value or Number of Orders', className ="menu-title"),
             dcc.Dropdown(
@@ -173,7 +214,7 @@ app.layout = html.Div(children=[
     html.Div(children=[
         html.Div(children=[
             dcc.Graph(id= "numeric-point-chart", className = "card1"),
-                      dcc.Graph(id="year-bar-chart", className="card2"),
+            dcc.Graph(id="year-bar-chart", className="card2"),
         
         ]
         ),
@@ -190,6 +231,7 @@ app.layout = html.Div(children=[
 
 @app.callback(
     [
+        Output("numeric-point-chart", "figure"),
         Output("year-bar-chart", "figure"),
         Output("month-line-chart", "figure"),
         Output("top10_2020", "figure"),
@@ -200,7 +242,33 @@ app.layout = html.Div(children=[
 def update_charts2(selected_value):
 
     if selected_value == "net_value":
-    
+
+        # numeric point chart (Aufgaben 1+2)
+        fig = go.Figure()
+
+        fig.add_trace(go.Indicator(
+            mode = "number",
+            value = float(orderedSpend_year[orderedSpend_year["Year"]==2019]["Net Value"]),
+            number = {'prefix': ""},
+            delta = {'position': "top", 'reference': 320},
+            title = {'text': 'Ordered spend 2019'},
+            domain = {'row':0, 'column': 0}))
+
+        fig.add_trace(go.Indicator(
+            mode = "number",
+            value = float(orderedSpend_year[orderedSpend_year["Year"]==2020]["Net Value"]),
+            number = {'prefix': ""},
+            delta = {'position': "top", 'reference': 320},
+            title = {'text': 'Ordered spend 2020'},
+            domain = {'row':1, 'column': 0}))
+
+        fig.update_layout(
+            grid = {'rows':2, 'columns': 1},
+            paper_bgcolor = colors["paper_bgcolor"],
+           # plot_bgcolor = colors["plot_bgcolor"]
+            )
+
+        # bar chart 1: Aufgabe 4
         bar_chart_figure1 = {
             'data': [
                 {
@@ -219,11 +287,12 @@ def update_charts2(selected_value):
             "layout": {
                 "title": "Ordered spend per purchasing Org. according to 'Net Value'",
                 "showlegend": True,
-                "paper_bgcolor": "#00000000",
-                "plot_bgcolor": "#00000000"
+                "paper_bgcolor": colors["paper_bgcolor"],
+                "plot_bgcolor": colors["plot_bgcolor"]
             }
         }
 
+        # line chart: Aufgabe 3
         line_chart_figure = {
             "data": [
                 {
@@ -254,12 +323,39 @@ def update_charts2(selected_value):
             "layout": {
                 "title": "Net Value per Month",
                 "showlegend": False,
-                "paper_bgcolor": "#00000000",
-                "plot_bgcolor": "#00000000",
+                "paper_bgcolor": colors["paper_bgcolor"],
+                "plot_bgcolor": colors["plot_bgcolor"]
             }
         }
 
     elif selected_value == "number_of_orders":
+
+        fig = go.Figure()
+
+        fig.add_trace(go.Indicator(
+            mode = "number",
+            value = numbOrders_2019,
+            number = {'prefix': ""},
+            delta = {'position': "top", 'reference': 320},
+            title = {'text': 'Ordered spend 2019'},
+            domain = {'row':0, 'column': 0}))
+
+        fig.add_trace(go.Indicator(
+            mode = "number",
+            value = numbOrders_2020,
+            number = {'prefix': ""},
+            delta = {'position': "top", 'reference': 320},
+            title = {'text': 'Ordered spend 2020'},
+            domain = {'row':1, 'column': 0}))
+
+        fig.update_layout(
+            grid = {'rows':2, 'columns': 1},
+            paper_bgcolor = colors["paper_bgcolor"]
+        
+            #plot_bgcolor = colors["plot_bgcolor"])
+        )
+
+
         bar_chart_figure1 = {
             'data': [
                 {
@@ -278,8 +374,8 @@ def update_charts2(selected_value):
             "layout": {
                 "title": "Ordered spend per purchasing Org. according to Number of Orders",
                 "showlegend": True,
-                "paper_bgcolor": "#00000000",
-                "plot_bgcolor": "#00000000"
+                "paper_bgcolor": colors["paper_bgcolor"],
+                "plot_bgcolor": colors["plot_bgcolor"]
             }
         }
 
@@ -313,15 +409,16 @@ def update_charts2(selected_value):
             "layout": {
                 "title": "Number of Orders per Month",
                 "showlegend": False,
-                "paper_bgcolor": "#00000000",
-                "plot_bgcolor": "#00000000",
+                "paper_bgcolor": colors["paper_bgcolor"],
+                "plot_bgcolor": colors["plot_bgcolor"]
             }
         }
     else: 
         line_chart_figure = None
         bar_chart_figure1 = None
+        fig = None
 
-    
+    # bar chart 2: Aufgabe 5, Teil 1: 2019
 
     bar_chart_figure2 = {
         "data": [{
@@ -337,8 +434,8 @@ def update_charts2(selected_value):
         "layout": {
             "title": "Net Value by Supplier 2019",
             "showlegend": False,
-            "paper_bgcolor": "#00000000",
-            "plot_bgcolor": "#00000000",
+            "paper_bgcolor": colors["paper_bgcolor"],
+            "plot_bgcolor": colors["plot_bgcolor"],
             "xaxis": {
                 "showgrid": False
             },
@@ -349,6 +446,8 @@ def update_charts2(selected_value):
             }
         }
     }
+
+    # bar chart 4: Aufgabe 5, Teil 2: 2020
 
     bar_chart_figure4 = {"data": [{
             "x": top10_2020["Supplier name"],
@@ -363,8 +462,8 @@ def update_charts2(selected_value):
         "layout": {
             "title": "Net Value by Supplier 2020",
             "showlegend": False,
-            "paper_bgcolor": "#00000000",
-            "plot_bgcolor": "#00000000",
+            "paper_bgcolor": colors["paper_bgcolor"],
+            "plot_bgcolor": colors["plot_bgcolor"],
             "xaxis": {
                 "showgrid": False
             },
@@ -376,7 +475,25 @@ def update_charts2(selected_value):
         }
     }
 
-    return bar_chart_figure1, line_chart_figure, bar_chart_figure2, bar_chart_figure4
+    numeric_chart_figure = fig
+
+    return  numeric_chart_figure, bar_chart_figure1, line_chart_figure, bar_chart_figure2, bar_chart_figure4
+
+@app.callback(
+    Output("city-checklist", "value"),
+    Output("all-checklist", "value"),
+    Input("city-checklist", "value"),
+    Input("all-checklist", "value"),
+)
+def sync_checklists(cities_selected, all_selected):
+    ctx = dash.callback_context
+    input_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if input_id == "city-checklist":
+        all_selected = ["All"] if set(cities_selected) == set(all_cities) else []
+    else:
+        cities_selected = all_cities if all_selected else []
+    print(cities_selected, all_selected)
+    return cities_selected, all_selected
 
 # @app.callback(
 #     [
